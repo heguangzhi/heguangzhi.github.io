@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="code-doc" />
+    <meta name="generator" content="Pelican (Code-doc theme)" />
+
+    <title>MySQL 5.7 xtrabackup 2.4.4 全量和增量的备份和恢复方案 - code-doc</title>
+
+   
+        <link href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+      <!--   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" /> -->
+     <!--  <link href="//libs.baidu.com/fontawesome/4.0.3/css/font-awesome.min.css" rel="stylesheet"> -->
+      <link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet">
+      <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />   -->
+
+
+      <link rel="stylesheet" href="/theme/css/pygment.css" />
+      <link rel="stylesheet" href="/theme/css/code_doc_bootstrap.css" />
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link rel="shortcut icon" href="/favicon.ico" />
+  </head>
+
+  <body>
+   
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+	   <div class="navbar-header">
+		<button type="button" class="navbar-toggle" 
+				data-toggle="collapse" data-target="#main-navbar-collapse">
+		  <span class="sr-only">Toggle navigation</span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		</button>
+
+		<a class="navbar-brand" href="/" rel="home">
+          <i class="fa fa-home fa-fw fa-lg"> </i>  code-doc </a>
+       </div>
+
+      <div class="collapse navbar-collapse" id="main-navbar-collapse">
+        <ul class="nav navbar-nav">
+            <li class="divider"></li>
+            <li class="">
+              <a href="/archives.html">Archives</a>
+            </li>
+          <li class="divider"></li>
+        </ul> <!-- /nav -->
+      </div> <!-- /navbar-collapse -->
+	  </div> <!-- /container -->
+    </nav> <!-- /navbar -->
+
+
+
+    <div class="container" id="main-container">
+      <div class="row">
+        <div class="col-md-9" id="content">
+<article itemscope="itemscope" itemtype="http://schema.org/BlogPosting">
+  <header class="article-header">
+
+<h1>
+  <a href="/posts/2016/Sep/01/xtrabackup_mysql5.7/" rel="bookmark"
+     title="Permalink to MySQL 5.7 xtrabackup 2.4.4 全量和增量的备份和恢复方案">
+    MySQL 5.7 xtrabackup 2.4.4 全量和增量的备份和恢复方案
+  </a>
+</h1><div class="article-header-info">
+
+  <p>
+      作者： <a href="/author/frankhe.html">Frank.he</a>
+    分类：
+    <a href="/category/mysql.html">
+      MySQL</a>
+    &nbsp;&nbsp;
+
+    时间：2016-09-01 09:44 
+
+
+  </p>
+</div> <!-- /.article-header-info -->  </header>
+  <div class="content-body" itemprop="text articleBody">
+	<blockquote>
+<p>Xtrabackup是一个对InnoDB做数据备份的工具，支持在线热备份(备份时不影响数据读写)，是商业备份工具InnoDB Hotbackup的一个很好的替代品。 
+Xtrabackup有两个主要的工具：xtrabackup、innobackupex </p>
+<blockquote>
+<p>1、xtrabackup只能备份InnoDB和XtraDB两种数据表，而不能备份MyISAM数据表 <br>
+2、innobackupex是参考了InnoDB Hotbackup的innoback脚本修改而来的.innobackupex是一个perl脚本封装，封装了xtrabackup。主要是为了方便的 同时备份InnoDB和MyISAM引擎的表，但在处理myisam时需要加一个读锁。并且加入了一些使用的选项。如slave-info可以记录备份恢 复后，作为slave需要的一些信息，根据这些信息，可以很方便的利用备份来重做slave。</p>
+</blockquote>
+</blockquote>
+<h2>安装xtrabackup</h2>
+<h3>下载地址</h3>
+<p>http://www.percona.com/downloads/XtraBackup/</p>
+<p>选择下载版本: Percona-XtraBackup-2.4.4 rpm 安装包</p>
+<div class="highlight"><pre><span></span>cd /usr/local/src 
+
+# wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.4.4/binary/redhat/6/x86_64/percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm 
+--2016-08-24 14:54:06--  https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.4.4/binary/redhat/6/x86_64/percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm
+Resolving www.percona.com... 74.121.199.234
+Connecting to www.percona.com|74.121.199.234|:443... connected.
+
+2016-08-24 15:19:51 (255 KB/s) - “percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm” saved [8534624/8534624]
+
+# rpm -ivh percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm
+
+[root@localhost src]#  rpm -ivh percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm
+warning: percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm: Header V4 DSA/SHA1 Signature, key ID cd2efd2a: NOKEY
+error: Failed dependencies:
+        libev.so.4()(64bit) is needed by percona-xtrabackup-24-2.4.4-1.el6.x86_64
+
+#yum install libev-devel
+
+#rpm -ivh percona-xtrabackup-24-2.4.4-1.el6.x86_64.rpm       
+</pre></div>
+
+
+<h3>全量和增量备份脚本</h3>
+<div class="highlight"><pre><span></span>cd /root/
+#vim innobackupex-runner.sh
+</pre></div>
+
+
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+<span class="c1"># </span>
+<span class="c1"># Script to create full and incremental backups (for all databases on server) using innobackupex from Percona.</span>
+<span class="c1"># http://www.percona.com/doc/percona-xtrabackup/innobackupex/innobackupex_script.html</span>
+<span class="c1">#</span>
+<span class="c1"># Every time it runs will generate an incremental backup except for the first time (full backup).</span>
+<span class="c1"># FULLBACKUPLIFE variable will define your full backups schedule.</span>
+<span class="c1">#</span>
+<span class="c1"># (C)2010 Owen Carter @ Mirabeau BV</span>
+<span class="c1"># This script is provided as-is; no liability can be accepted for use.</span>
+<span class="c1"># You are free to modify and reproduce so long as this attribution is preserved.</span>
+<span class="c1">#</span>
+
+<span class="nv">INNOBACKUPEX</span><span class="o">=</span>innobackupex
+<span class="nv">INNOBACKUPEXFULL</span><span class="o">=</span>/usr/bin/<span class="nv">$INNOBACKUPEX</span>
+<span class="nv">USEROPTIONS</span><span class="o">=</span><span class="s2">&quot;--user=root --password=******* &quot;</span>
+<span class="nv">TMPFILE</span><span class="o">=</span><span class="s2">&quot;/tmp/innobackupex-runner.</span><span class="nv">$$</span><span class="s2">.tmp&quot;</span>
+<span class="nv">MYCNF</span><span class="o">=</span>/etc/my.cnf
+<span class="nv">MYSQL</span><span class="o">=</span>/usr/bin/mysql
+<span class="nv">MYSQLADMIN</span><span class="o">=</span>/usr/bin/mysqladmin
+
+<span class="nv">BACKUPDIR</span><span class="o">=</span>/data/backup <span class="c1"># Backups base directory</span>
+<span class="nv">FULLBACKUPDIR</span><span class="o">=</span><span class="nv">$BACKUPDIR</span>/full <span class="c1"># Full backups directory</span>
+<span class="nv">INCRBACKUPDIR</span><span class="o">=</span><span class="nv">$BACKUPDIR</span>/incr <span class="c1"># Incremental backups directory</span>
+<span class="nv">FULLBACKUPLIFE</span><span class="o">=</span><span class="m">86400</span> <span class="c1"># Lifetime of the latest full backup in seconds </span>
+<span class="nv">KEEP</span><span class="o">=</span><span class="m">10</span> <span class="c1"># Number of full backups (and its incrementals) to keep</span>
+
+<span class="c1"># Grab start time</span>
+<span class="nv">STARTED_AT</span><span class="o">=</span><span class="sb">`</span>date +%s<span class="sb">`</span>
+
+<span class="c1">#############################################################################</span>
+<span class="c1"># Display error message and exit</span>
+<span class="c1">#############################################################################</span>
+error<span class="o">()</span>
+<span class="o">{</span>
+    <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="m">1</span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+    <span class="nb">exit</span> <span class="m">1</span>
+<span class="o">}</span>
+
+<span class="c1"># Check options before proceeding</span>
+<span class="k">if</span> <span class="o">[</span> ! -x <span class="nv">$INNOBACKUPEXFULL</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+  error <span class="s2">&quot;</span><span class="nv">$INNOBACKUPEXFULL</span><span class="s2"> does not exist.&quot;</span>
+<span class="k">fi</span>
+
+<span class="k">if</span> <span class="o">[</span> ! -d <span class="nv">$BACKUPDIR</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+  error <span class="s2">&quot;Backup destination folder: </span><span class="nv">$BACKUPDIR</span><span class="s2"> does not exist.&quot;</span>
+<span class="k">fi</span>
+
+<span class="k">if</span> <span class="o">[</span> -z <span class="s2">&quot;`</span><span class="nv">$MYSQLADMIN</span><span class="s2"> </span><span class="nv">$USEROPTIONS</span><span class="s2"> status | grep &#39;Uptime&#39;`&quot;</span> <span class="o">]</span> <span class="p">;</span> <span class="k">then</span>
+ error <span class="s2">&quot;HALTED: MySQL does not appear to be running.&quot;</span>
+<span class="k">fi</span>
+
+<span class="k">if</span> ! <span class="sb">`</span><span class="nb">echo</span> <span class="s1">&#39;exit&#39;</span> <span class="p">|</span> <span class="nv">$MYSQL</span> -s <span class="nv">$USEROPTIONS</span><span class="sb">`</span> <span class="p">;</span> <span class="k">then</span>
+ error <span class="s2">&quot;HALTED: Supplied mysql username or password appears to be incorrect (not copied here for security, see script).&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># Some info output</span>
+<span class="nb">echo</span> <span class="s2">&quot;----------------------------&quot;</span>
+<span class="nb">echo</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$0</span><span class="s2">: MySQL backup script&quot;</span>
+<span class="nb">echo</span> <span class="s2">&quot;started: `date`&quot;</span>
+<span class="nb">echo</span>
+
+<span class="c1"># Create full and incr backup directories if they not exist.</span>
+mkdir -p <span class="nv">$FULLBACKUPDIR</span>
+mkdir -p <span class="nv">$INCRBACKUPDIR</span>
+
+<span class="c1"># Find latest full backup</span>
+<span class="nv">LATEST_FULL</span><span class="o">=</span><span class="sb">`</span>find <span class="nv">$FULLBACKUPDIR</span> -mindepth <span class="m">1</span> -maxdepth <span class="m">1</span> -type d -printf <span class="s2">&quot;%P\n&quot;</span> <span class="p">|</span> sort -nr <span class="p">|</span> head -1<span class="sb">`</span>
+
+<span class="c1"># Get latest backup last modification time</span>
+<span class="nv">LATEST_FULL_CREATED_AT</span><span class="o">=</span><span class="sb">`</span>stat -c %Y <span class="nv">$FULLBACKUPDIR</span>/<span class="nv">$LATEST_FULL</span><span class="sb">`</span>
+
+<span class="c1"># Run an incremental backup if latest full is still valid. Otherwise, run a new full one.</span>
+<span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$LATEST_FULL</span><span class="s2">&quot;</span> -a <span class="sb">`</span>expr <span class="nv">$LATEST_FULL_CREATED_AT</span> + <span class="nv">$FULLBACKUPLIFE</span> + <span class="m">5</span><span class="sb">`</span> -ge <span class="nv">$STARTED_AT</span> <span class="o">]</span> <span class="p">;</span> <span class="k">then</span>
+  <span class="c1"># Create incremental backups dir if not exists.</span>
+  <span class="nv">TMPINCRDIR</span><span class="o">=</span><span class="nv">$INCRBACKUPDIR</span>/<span class="nv">$LATEST_FULL</span>
+  mkdir -p <span class="nv">$TMPINCRDIR</span>
+
+  <span class="c1"># Find latest incremental backup.</span>
+  <span class="nv">LATEST_INCR</span><span class="o">=</span><span class="sb">`</span>find <span class="nv">$TMPINCRDIR</span> -mindepth <span class="m">1</span> -maxdepth <span class="m">1</span> -type d <span class="p">|</span> sort -nr <span class="p">|</span> head -1<span class="sb">`</span>
+
+  <span class="c1"># If this is the first incremental, use the full as base. Otherwise, use the latest incremental as base.</span>
+  <span class="k">if</span> <span class="o">[</span> ! <span class="nv">$LATEST_INCR</span> <span class="o">]</span> <span class="p">;</span> <span class="k">then</span>
+    <span class="nv">INCRBASEDIR</span><span class="o">=</span><span class="nv">$FULLBACKUPDIR</span>/<span class="nv">$LATEST_FULL</span>
+  <span class="k">else</span>
+    <span class="nv">INCRBASEDIR</span><span class="o">=</span><span class="nv">$LATEST_INCR</span>
+  <span class="k">fi</span>
+
+  <span class="nb">echo</span> <span class="s2">&quot;Running new incremental backup using </span><span class="nv">$INCRBASEDIR</span><span class="s2"> as base.&quot;</span>
+  <span class="nv">$INNOBACKUPEXFULL</span> --defaults-file<span class="o">=</span><span class="nv">$MYCNF</span> <span class="nv">$USEROPTIONS</span> --incremental <span class="nv">$TMPINCRDIR</span> --incremental-basedir <span class="nv">$INCRBASEDIR</span> &gt; <span class="nv">$TMPFILE</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="k">else</span>
+  <span class="nb">echo</span> <span class="s2">&quot;Running new full backup.&quot;</span>
+  <span class="nv">$INNOBACKUPEXFULL</span> --defaults-file<span class="o">=</span><span class="nv">$MYCNF</span> <span class="nv">$USEROPTIONS</span> <span class="nv">$FULLBACKUPDIR</span> &gt; <span class="nv">$TMPFILE</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="k">if</span> <span class="o">[</span> -z <span class="s2">&quot;`tail -1 </span><span class="nv">$TMPFILE</span><span class="s2"> | grep &#39;completed OK!&#39;`&quot;</span> <span class="o">]</span> <span class="p">;</span> <span class="k">then</span>
+ <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$INNOBACKUPEX</span><span class="s2"> failed:&quot;</span><span class="p">;</span> <span class="nb">echo</span>
+ <span class="nb">echo</span> <span class="s2">&quot;---------- ERROR OUTPUT from </span><span class="nv">$INNOBACKUPEX</span><span class="s2"> ----------&quot;</span>
+ cat <span class="nv">$TMPFILE</span>
+ rm -f <span class="nv">$TMPFILE</span>
+ <span class="nb">exit</span> <span class="m">1</span>
+<span class="k">fi</span>
+
+<span class="nv">THISBACKUP</span><span class="o">=</span><span class="sb">`</span>awk -- <span class="s2">&quot;/Backup created in directory/ { split( \\\$0, p, \&quot;&#39;\&quot; ) ; print p[2] }&quot;</span> <span class="nv">$TMPFILE</span><span class="sb">`</span>
+rm -f <span class="nv">$TMPFILE</span>
+
+<span class="nb">echo</span> <span class="s2">&quot;Databases backed up successfully to: </span><span class="nv">$THISBACKUP</span><span class="s2">&quot;</span>
+<span class="nb">echo</span>
+
+<span class="c1"># Cleanup</span>
+<span class="nb">echo</span> <span class="s2">&quot;Cleanup. Keeping only </span><span class="nv">$KEEP</span><span class="s2"> full backups and its incrementals.&quot;</span>
+<span class="nv">AGE</span><span class="o">=</span><span class="k">$((</span><span class="nv">$FULLBACKUPLIFE</span> <span class="o">*</span> <span class="nv">$KEEP</span> <span class="o">/</span> <span class="m">60</span><span class="k">))</span>
+find <span class="nv">$FULLBACKUPDIR</span> -maxdepth <span class="m">1</span> -type d -mmin +<span class="nv">$AGE</span> -execdir <span class="nb">echo</span> <span class="s2">&quot;removing: &quot;</span><span class="nv">$FULLBACKUPDIR</span>/<span class="o">{}</span> <span class="se">\;</span> <span class="se">\</span>
+-execdir rm -rf <span class="nv">$FULLBACKUPDIR</span>/<span class="o">{}</span> <span class="se">\;</span> -execdir <span class="nb">echo</span> <span class="s2">&quot;removing: &quot;</span><span class="nv">$INCRBACKUPDIR</span>/<span class="o">{}</span> <span class="se">\;</span> <span class="se">\</span>
+-execdir rm -rf <span class="nv">$INCRBACKUPDIR</span>/<span class="o">{}</span> <span class="se">\;</span>
+
+<span class="nb">echo</span>
+<span class="nb">echo</span> <span class="s2">&quot;completed: `date`&quot;</span>
+<span class="nb">exit</span> <span class="m">0</span>
+</pre></div>
+</td></tr></table>
+
+  </div>
+  
+<div class="article-tag-list">
+<span class="label label-default">Tags</span>
+	<a href="/tag/xtrabackup.html"><i class="fa fa-tag"></i>xtrabackup</a>&nbsp;
+	<a href="/tag/mysql.html"><i class="fa fa-tag"></i>mysql</a>&nbsp;
+</div> <!--  <hr />
+  <div class="well well-sm">  
+  --> <!-- Social media sharing buttons -->
+ <!--     -->
+
+    <!-- Google+ -->
+ <!--    <div class="g-plus" data-action="share" data-annotation="bubble"></div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <div class="g-plusone" data-size="medium"></div>&nbsp; -->
+
+    <!-- Facebook -->
+<!--     <div class="fb-like" 
+        data-href="/posts/2016/Sep/01/xtrabackup_mysql5.7/" 
+        data-layout="button_count" 
+        data-action="like" data-show-faces="true" 
+        data-share="true">
+    </div>
+    &nbsp;
+  </div>  -->
+
+  <!-- /Social media sharing buttons -->
+
+    <h4>Related Articles</h4>
+    <ul>
+        <li><a href="/posts/2016/Sep/05/xtrabackup_mysql5.7_test/">xtrabackup2.4.4 备份恢复测试</a></li>
+        <li><a href="/posts/2017/Nov/21/linux_MySQL/">CentOS 7.X中的MySQL5.6升级到 5.7</a></li>
+        <li><a href="/posts/2016/Sep/14/MySQL_percona_pt-deadlock-logger/">percona-toolkit包中的pt-deadlock-logger使用说明</a></li>
+        <li><a href="/posts/2016/Aug/08/jemallocyou-hua-mysql-nginxtenginenei-cun-guan-li/">Jemalloc优化MySQL、Nginx/Tengine内存管理</a></li>
+        <li><a href="/posts/2016/Sep/13/MySQL_percona_install/">percona-toolkit工具包安装</a></li>
+    </ul>
+ 
+
+ <div class="pagination">
+      <ul>
+        <li class="prev"><a href="/posts/2016/Aug/25/mysql5.7.14/">← 上一篇</a></li>
+        <li><a href="/archives.html">Archive</a></li>
+        <li class="next"><a href="/posts/2016/Sep/02/cut_nginx_log_file/">下一篇 →</a></li>
+      </ul>
+    </div>
+
+  
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+        <div class="ds-thread" data-thread-key="xtrabackup_mysql5.7" data-title="MySQL 5.7 xtrabackup 2.4.4 全量和增量的备份和恢复方案" data-url="/posts/2016/Sep/01/xtrabackup_mysql5.7/"></div>
+        <script type="text/javascript">
+            var duoshuoQuery = {short_name:"code-doc"};
+            (function() {
+                var ds = document.createElement('script');
+                ds.type = 'text/javascript';ds.async = true;
+                ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+                ds.charset = 'UTF-8';
+                (document.getElementsByTagName('head')[0]
+                 || document.getElementsByTagName('body')[0]).appendChild(ds);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://duoshuo.com/">comments powered by Duoshuo.</a></noscript>
+       
+
+    </section>
+
+
+
+
+</article>
+        </div><!-- /content -->
+
+        <div class="col-md-3 sidebar-nav" id="sidebar">
+
+<div class="row">
+
+
+<div class="col-xs-6 col-md-12">
+<h4><i class="fa fa-folder fa-fw fa-lg"></i> Categories</h4>
+<ul class="list-unstyled category-links">
+  <li><a href="/category/axure.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Axure</a></li>
+  <li><a href="/category/docker.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Docker</a></li>
+  <li><a href="/category/linux.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> linux</a></li>
+  <li><a href="/category/logrotate.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Logrotate</a></li>
+  <li><a href="/category/mysql.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> MySQL</a></li>
+  <li><a href="/category/nginx.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> nginx</a></li>
+  <li><a href="/category/nodejs.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Node.js</a></li>
+  <li><a href="/category/opensource.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> OpenSource</a></li>
+  <li><a href="/category/pelican.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> pelican</a></li>
+  <li><a href="/category/python.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Python</a></li>
+  <li><a href="/category/semver.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> semver</a></li>
+</ul>
+</div>
+
+</div> <!-- /row -->
+
+
+
+<h4><i class="fa fa-comment fa-fw fa-lg"></i>Recent Post</h4>
+<ul id="recent-posts">
+    <li>
+      <a href="/posts/2018/Apr/13/dockerda-jian-lnmphuan-jing/">Docker搭建LNMP环境</a>
+    </li>
+    <li>
+      <a href="/posts/2018/Apr/13/a-li-yun-fu-wu-qi-an-zhuang-an-quan-pei-zhi/">阿里云服务器安装安全配置</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Dec/04/centos7xpei-zhi-nginxde-servicejiao-ben-shi-xian-zi-dong-qi-dong/">CentOS7.x配置nginx的service脚本实现自动启动</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Nov/21/linux_MySQL/">CentOS 7.X中的MySQL5.6升级到 5.7</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Nov/29/CentOS7_timedatectl/">CentOS7 修改时区</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Oct/13/nodejs_nginx/">阿里云服务器配置nodejs环境</a>
+    </li>
+</ul>
+
+<h4><i class="fa fa-tags fa-fw fa-lg"></i> Tags</h4>
+<p class="tag-cloud">
+<span class="tag-4">
+    <a href="/tag/logrotate.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>logrotate
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona-toolkit.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona-toolkit
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/iso.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>iso
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php-fpm.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php-fpm
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/find.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>find
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/linux.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>linux
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/rkhunter.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>rkhunter
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/jemalloc.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>jemalloc
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/tengine.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Tengine
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/dnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>dnmp
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/axure.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Axure
+    </a>
+</span>
+<span class="tag-2">
+    <a href="/tag/yum.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>yum
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/lnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>lnmp
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/nginx.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nginx
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/pelican.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Pelican
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/shell.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>shell
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/mysql.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>mysql
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp-relay-server.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>NTP Relay Server
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/python.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Python
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/proxy.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>proxy
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/pt-deadlock-logger.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>pt-deadlock-logger
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/swap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>swap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/timedatectl.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>timedatectl
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos7.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS7.*
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/xtrabackup.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>xtrabackup
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/nodejs.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nodejs
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/semver.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>semver
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/opensource.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>OpenSource
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/voidy-bootstrap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>voidy-bootstrap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>ntp
+    </a>
+</span>
+</p>
+
+
+
+<hr />
+
+        </div><!--/sidebar -->
+      </div><!--/row-->
+    </div><!--/.container /#main-container -->
+
+    <footer id="site-footer">
+ 
+      <address id="site-colophon">
+        ©2016 Code-Doc. All Rights Reserved
+        <p class="text-center text-muted">
+        Site built using <a href="http://getpelican.com/" target="_blank">Pelican</a>
+        &nbsp;&bull;&nbsp;   Theme based on VoidyBootstrap.
+        </p>
+      </address><!-- /colophon  -->
+    </footer>
+
+
+    <!-- javascript -->
+
+
+<!-- Facebook -->
+<!-- <div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script> -->
+
+<!-- Twitter -->
+<!-- <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> -->
+
+<!-- Google+ -->
+<!-- Synchronous 
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+-->
+<!-- Asynchronous -->
+<!-- <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/platform.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> -->  </body>
+</html>

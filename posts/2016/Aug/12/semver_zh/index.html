@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="code-doc" />
+    <meta name="generator" content="Pelican (Code-doc theme)" />
+
+    <title>语义化的版本控制 2.0.0-rc.1 - code-doc</title>
+
+   
+        <link href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+      <!--   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" /> -->
+     <!--  <link href="//libs.baidu.com/fontawesome/4.0.3/css/font-awesome.min.css" rel="stylesheet"> -->
+      <link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet">
+      <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />   -->
+
+
+      <link rel="stylesheet" href="/theme/css/pygment.css" />
+      <link rel="stylesheet" href="/theme/css/code_doc_bootstrap.css" />
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link rel="shortcut icon" href="/favicon.ico" />
+  </head>
+
+  <body>
+   
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+	   <div class="navbar-header">
+		<button type="button" class="navbar-toggle" 
+				data-toggle="collapse" data-target="#main-navbar-collapse">
+		  <span class="sr-only">Toggle navigation</span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		</button>
+
+		<a class="navbar-brand" href="/" rel="home">
+          <i class="fa fa-home fa-fw fa-lg"> </i>  code-doc </a>
+       </div>
+
+      <div class="collapse navbar-collapse" id="main-navbar-collapse">
+        <ul class="nav navbar-nav">
+            <li class="divider"></li>
+            <li class="">
+              <a href="/archives.html">Archives</a>
+            </li>
+          <li class="divider"></li>
+        </ul> <!-- /nav -->
+      </div> <!-- /navbar-collapse -->
+	  </div> <!-- /container -->
+    </nav> <!-- /navbar -->
+
+
+
+    <div class="container" id="main-container">
+      <div class="row">
+        <div class="col-md-9" id="content">
+<article itemscope="itemscope" itemtype="http://schema.org/BlogPosting">
+  <header class="article-header">
+
+<h1>
+  <a href="/posts/2016/Aug/12/semver_zh/" rel="bookmark"
+     title="Permalink to 语义化的版本控制 2.0.0-rc.1">
+    语义化的版本控制 2.0.0-rc.1
+  </a>
+</h1><div class="article-header-info">
+
+  <p>
+      作者： <a href="/author/tom-preston-werner.html">Tom Preston-Werner</a>
+    分类：
+    <a href="/category/semver.html">
+      semver</a>
+    &nbsp;&nbsp;
+
+    时间：2016-08-12 16:29 
+
+
+  </p>
+</div> <!-- /.article-header-info -->  </header>
+  <div class="content-body" itemprop="text articleBody">
+	<p><a href="https://raw.github.com/kainy/semver/5aa3d95ad83b9ff3fe9f3a919b9b7d99714e86ba/semver_zh.md"><strong>引用源地址</strong></a></p>
+<p>在软件管理世界里存在着被称作“依赖地狱”的死亡之谷，系统规模越大，引入的程序包越多，你就越有可能在不久的将来发现自己深陷绝望之中。</p>
+<p>在多依赖的系统中发布新版本程序包很快成为噩梦。如果依赖关系过紧密，可能面临版本控制被锁死的风险（必须对每一个依赖程序包改版才能完成某次升级）。而如果依赖关系过于松散，又无法避免版本混乱（\产生超过合理值的版本数/）。当你项目的进展由于版本控制被锁死和/或版本混乱变得不那么简便和可靠，也就意味着你正处于依赖地狱之中。</p>
+<p>为了解决这个问题，我提议通过一些规则和约束来表述版本号如何命名及何时更新。要使此系统正常运作，你首先需要声明一个公共应用程序接口（以下简称API）。可以\以文档形式或代码形式实施/。需要注意的是，这个API必须是清晰和明确的。一旦公共API确定下来，你将通过版本号增量来描述版本修改。形如X.Y.Z（主版本号.副版本号.补丁号）这样的版本格式。通过增加补丁号来表示不影响API的错误修复，增加副版本号来表示兼容现有API的扩展/修改，而增加主版本号则表示不兼容现有API的修改。</p>
+<p>我称这套系统为“语义化的版本控制”，在这套约定下，版本号及其更新方式 包含了相邻版本间的\底层/代码和修改部分的信息。</p>
+<h2>语义化版本控制说明（SemVer）</h2>
+<p>文档中出现的“<em>必须</em>”，“<em>禁止</em>”，“<em>要求</em>”，“<em>应该</em>”，“<em>不该</em>”，“<em>可能</em>”，“<em>可能不</em>”，“<em>建议</em>”，“<em>也许</em>”，和“<em>可选</em>”按RFC 2119规范解读。</p>
+<ol>
+<li>
+<p>使用语义化版本控制的软件<em>必须</em> 声明公共API。该API可以在代码中声明也可以固化为文档。无论何种形式，API\应该/是明确而全面的。</p>
+</li>
+<li>
+<p>标准的版本号<em>必须</em>采用X.Y.Z的格式，其中X，Y，和Z为非负的整数。X是主版本号，Y是副版本号，而Z为补丁号。每个元素<em>必须</em>
+取数值1为增量。例如：1.9.1-&gt;1.10.0-&gt;1.11.0。</p>
+</li>
+<li>
+<p>标记版本号的软件包发布后，<em>禁止</em>改变该版本软件包的内容。任何修改都必须以新版本发布。</p>
+</li>
+<li>
+<p>主版本号为0（0.y.z）的软件处于开发初始阶段，一切都可能随时被改变。这样的公共API不应该被视为稳定版。</p>
+</li>
+<li>
+<p>1.0.0版本用于\界定/公共API的形成。这一版本之后所有的版本号更新都基于公共API及其修改。</p>
+</li>
+<li>
+<p>补丁号Z（x.y.Z | x&gt;0）<em>必须</em>增加，仅在兼容原有接口的错误修复被引入时。错误修复指的是对不正确反应修复而进行的\内部修改/。</p>
+</li>
+<li>
+<p>副版本号Y （x.Y.z | x&gt;0）<em>必须</em>增加，如果新的、兼容原有接口的功能被引入公共API；或者任何公共API被标记为弃用。副版本号<em>可能</em>增加，如果大量新功能或者改进被通过私有代码引入。这一过程中<em>可能</em>包含补丁级别的改变。当副版本号增加时补丁号必须置零。</p>
+</li>
+<li>
+<p>主版本号X （X.y.z | X&gt;0） <em>必须</em>增加，如果任何不兼容原有接口的改变被引入到公共API，这一过程中可能包含副版本级别和补丁级别的改变。当主版本号增加时补丁号和副版本号<em>必须</em>置零。</p>
+</li>
+<li>
+<p>预发布版本<em>可以</em>通过紧跟在补丁号后的一个破折号和一系列点号分隔的标识符来修饰。这些标识符<em>必须</em>由ASCII码和破则号[0-9A-Za-z-]组成。预发布版本\满足需求/但优先级低于相关联的标准版本。例如： 1.0.0-alpha, 1.0.0-alpha.1, 1.0.0-0.3.7, 1.0.0-x.7.z.92。</p>
+</li>
+<li>
+<p>构建版本<em>可以</em>通过紧跟在补丁号或者预发布本本号后的一个加号和一系列点号分隔的标识符来修饰。这些标识符<em>必须</em>由ASCII码和破则号[0-9A-Za-z-]组成。构建版本\满足需求/且优先级高于相关联的标准版本。例如：1.0.0+build, 1.3.7+build.11.e0f985a。</p>
+</li>
+<li>
+<p>优先级<em>必须</em>通过将版本号按主版本号，副版本号，补丁号，预发布版本号，和构建版本号顺序拆分后计算。主版本号，副版本号和补丁号以数值大小比较。预发布和构建版本号<em>必须</em>通过如下方式将点号分隔的每一标识符比较来确定：仅包含数字的标识符以数值大小比较，含字母或破则号的以ASCII排序比较。数字标识符的优先级低于非数字标识符。例如： 1.0.0-alpha &lt; 1.0.0-alpha.1 &lt; 1.0.0-beta.2 &lt; 1.0.0-beta.11 &lt; 1.0.0-rc.1 &lt; 1.0.0-rc.1+build.1 &lt; 1.0.0 &lt; 1.0.0+0.3.7 &lt; 1.3.7+build &lt; 1.3.7+build.2.b8f12d7 &lt; 1.3.7+build.11.e0f985a 。</p>
+</li>
+</ol>
+<h2>为什么要使用语义化的版本控制？</h2>
+<p>这并不是一个新的或者革命性的主意。实际上，你可能已经在做一些近似的事情了。问题在于光“近似”还不够。如果没有一些正式的规范可循，版本号对于依赖管理并无实质意义。通过为这一主意命名并给予清晰的定义，让你向软件使用者传达意向变得更为轻松。一旦这些意向变得清晰，灵活（而不过于灵活）依赖关系就能最终确定。</p>
+<p>举个例子来展示语义化的版本控制如何让依赖地狱成为过去。假设有一个名为“救火车”的库依赖另一个名为“梯子”的已纳入语义版本控制的库。救火车创建时，梯子的版本号为3.1.0。因为救火车调用的是3.1.0版本中的一些功能函数，你可以放心的指定梯子依赖为版本号大等于3.1.0而小于4.0.0。这样，当梯子版本3.1.1和3.2.0发布时，你就可以将直接它们纳入你的程序包管理系统，因为它们能与原有依赖软件兼容。</p>
+<p>作为一位负责任的开发者，你当然也会确保每个程序升级包的运行与表述一致。现实世界是复杂的，我们除了独善其身外能做的不多。你所能做的就是让语义化版本控制为你提供健全的程序包发布和升级方式，而无需\重新整理程序包依赖/，节省时间减少烦恼。</p>
+<p>如果你对此认同，希望立即开始使用语义化版本控制，你只需声明正在使用它并遵循这些规则就可以了。请在你的README文档中保留此页链接，让别人也知道这些规则并重中受益。</p>
+<h2>FAQ</h2>
+<h3>在0.y.z初始化开发阶段，我该如何完成版本修订？</h3>
+<p>最简单的做法是以0.1.0作为你的初始化开发版本，在后续发布中增加副版本号。</p>
+<h3>如何判断发布1.0.0版本的时机？</h3>
+<p>当你的软件被用于生产环境，就很可能已经处于1.0.0阶段了。如果使用者信赖你稳定的API，也应该发布1.0.0版本。如果你为兼容原有接口而担心，你可能已经处于1.0.0阶段了。</p>
+<h3>这不会阻碍快速开发和迭代？</h3>
+<p>主版本号为0完全为快速开发而存在。如果你每天都在改版API，那么你不是处在0.x.x版本就是处在可能成为下一主版本的独立分支的开发工作中。</p>
+<h3>如果对公共API的每个微小但不兼容的改变都需要产生新的主版本呢 ，岂不会导致版本号很快达到42.0.0？</h3>
+<p>这实际上是开发者责任感和前瞻性的问题。不兼容的改变不应该轻易被引入被大量依赖的代码中。升级所付出的代价可能是巨大的。不兼容的改变将增加主版本号意味着你必须为这些改变带来的影响深思熟虑，并评估相关的成本/受益率。</p>
+<h3>为全部公共API写文档的工作量太大了！</h3>
+<p>为供他人使用的软件编写完整的文档这是你作为一名专业开发者应尽的职责，控制软件复杂性是保持项目高 效的艰巨而重要的部分。如果没有人知道如何使用你的软件或者不知道对某个方法的调用是是否可靠，这（控制软件复杂性）将很难完成。而语义化版本控制，以及坚持对公共API的合理定义，可以保证每个人每件事运行顺畅。</p>
+<h3>万一不小心把一个不兼容的改变作为副版本发布了该怎么办？</h3>
+<p>一旦发现自己破坏了语义化版本控制规则，要尽快修复问题，并发布一个纠正问题且兼容原有接口的副版本。记住，修改一个已发布版本的内容是不可接受的，即便在这种情况下。合适的情况下，将犯错的版本写入文档，告诉使用者问题所在，让他们能够意识到这是有问题的版本。</p>
+<h3>如果我更新了自己的依赖性却没有改变公共API该怎么办？</h3>
+<p>如果不影响公共API则认为此次更新是兼容的。和你的程序包有相同依赖关系的软件应该会有它自己的依赖关系说明，如有冲突软件作者会在其中提出。此次改变是补丁级别还是副版本级别则取决于你更新依赖关系是想要修复bug还是引入新功能。后一种情况通常伴随着附加代码，这显然应该被判为副版本级别的更新。</p>
+<h3>如果正在修复的bug会产生与公共API不一致的代码该怎么办？（例如由于失误导致代码与公共API文档不同步）</h3>
+<p>依靠你的判断，如果你有一个大用户会由于行为回滚到公共API文档而\彻底困扰/，那么你可能应该进行一次主版本级别的更新，尽管这些修复从严格意义上来说是补丁级别发布。记住，语义化的版本控制的全部精义在于通过版本号的变化来传达意向。如果这些改变对于用户来说是重要的，请通过变更版本号来通知他们。</p>
+<h3>如何处理即将弃用的功能？</h3>
+<p>弃用现存的功能是软件开发中的家常便饭，也通常是向前发展所必须的。但当你弃用公共API的一部分时，你应该做两件事：（1）更新文档以便使用者知道这个变化。（2）发行不包含弃用功能的副版本。在新主版本中完全移除弃用功能前，至少应有一个不包含弃用功能的副版本发布，以便使用者能够平滑过渡到新API。</p>
+<h2>关于</h2>
+<p>语义化的版本控制说明由Gravatars创办者兼Github共同创办者 <a href="http://tom.preston-werner.com">Tom Preston-Werner</a> 所著。</p>
+<p>如需反馈，<a href="https://github.com/mojombo/semver/issues">请在Github上创建issue</a>。</p>
+<h2>许可</h2>
+<p>创作共用 - CC BY 3.0
+<a href="http://creativecommons.org/licenses/by/3.0">http://creativecommons.org/licenses/by/3.0/</a></p>
+
+  </div>
+  
+<div class="article-tag-list">
+<span class="label label-default">Tags</span>
+	<a href="/tag/semver.html"><i class="fa fa-tag"></i>semver</a>&nbsp;
+</div> <!--  <hr />
+  <div class="well well-sm">  
+  --> <!-- Social media sharing buttons -->
+ <!--     -->
+
+    <!-- Google+ -->
+ <!--    <div class="g-plus" data-action="share" data-annotation="bubble"></div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <div class="g-plusone" data-size="medium"></div>&nbsp; -->
+
+    <!-- Facebook -->
+<!--     <div class="fb-like" 
+        data-href="/posts/2016/Aug/12/semver_zh/" 
+        data-layout="button_count" 
+        data-action="like" data-show-faces="true" 
+        data-share="true">
+    </div>
+    &nbsp;
+  </div>  -->
+
+  <!-- /Social media sharing buttons -->
+
+ 
+
+ <div class="pagination">
+      <ul>
+        <li class="prev"><a href="/posts/2016/Aug/10/linux-shell/">← 上一篇</a></li>
+        <li><a href="/archives.html">Archive</a></li>
+        <li class="next"><a href="/posts/2016/Aug/12/pelicanda-jian-jing-tai-bo-ke/">下一篇 →</a></li>
+      </ul>
+    </div>
+
+  
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+        <div class="ds-thread" data-thread-key="semver_zh" data-title="语义化的版本控制 2.0.0-rc.1" data-url="/posts/2016/Aug/12/semver_zh/"></div>
+        <script type="text/javascript">
+            var duoshuoQuery = {short_name:"code-doc"};
+            (function() {
+                var ds = document.createElement('script');
+                ds.type = 'text/javascript';ds.async = true;
+                ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+                ds.charset = 'UTF-8';
+                (document.getElementsByTagName('head')[0]
+                 || document.getElementsByTagName('body')[0]).appendChild(ds);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://duoshuo.com/">comments powered by Duoshuo.</a></noscript>
+       
+
+    </section>
+
+
+
+
+</article>
+        </div><!-- /content -->
+
+        <div class="col-md-3 sidebar-nav" id="sidebar">
+
+<div class="row">
+
+
+<div class="col-xs-6 col-md-12">
+<h4><i class="fa fa-folder fa-fw fa-lg"></i> Categories</h4>
+<ul class="list-unstyled category-links">
+  <li><a href="/category/axure.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Axure</a></li>
+  <li><a href="/category/docker.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Docker</a></li>
+  <li><a href="/category/linux.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> linux</a></li>
+  <li><a href="/category/logrotate.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Logrotate</a></li>
+  <li><a href="/category/mysql.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> MySQL</a></li>
+  <li><a href="/category/nginx.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> nginx</a></li>
+  <li><a href="/category/nodejs.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Node.js</a></li>
+  <li><a href="/category/opensource.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> OpenSource</a></li>
+  <li><a href="/category/pelican.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> pelican</a></li>
+  <li><a href="/category/python.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Python</a></li>
+  <li><a href="/category/semver.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> semver</a></li>
+</ul>
+</div>
+
+</div> <!-- /row -->
+
+
+
+<h4><i class="fa fa-comment fa-fw fa-lg"></i>Recent Post</h4>
+<ul id="recent-posts">
+    <li>
+      <a href="/posts/2018/Apr/13/dockerda-jian-lnmphuan-jing/">Docker搭建LNMP环境</a>
+    </li>
+    <li>
+      <a href="/posts/2018/Apr/13/a-li-yun-fu-wu-qi-an-zhuang-an-quan-pei-zhi/">阿里云服务器安装安全配置</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Dec/04/centos7xpei-zhi-nginxde-servicejiao-ben-shi-xian-zi-dong-qi-dong/">CentOS7.x配置nginx的service脚本实现自动启动</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Nov/21/linux_MySQL/">CentOS 7.X中的MySQL5.6升级到 5.7</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Nov/29/CentOS7_timedatectl/">CentOS7 修改时区</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Oct/13/nodejs_nginx/">阿里云服务器配置nodejs环境</a>
+    </li>
+</ul>
+
+<h4><i class="fa fa-tags fa-fw fa-lg"></i> Tags</h4>
+<p class="tag-cloud">
+<span class="tag-4">
+    <a href="/tag/logrotate.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>logrotate
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona-toolkit.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona-toolkit
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/iso.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>iso
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php-fpm.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php-fpm
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/find.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>find
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/linux.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>linux
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/rkhunter.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>rkhunter
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/jemalloc.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>jemalloc
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/tengine.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Tengine
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/dnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>dnmp
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/axure.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Axure
+    </a>
+</span>
+<span class="tag-2">
+    <a href="/tag/yum.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>yum
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/lnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>lnmp
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/nginx.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nginx
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/pelican.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Pelican
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/shell.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>shell
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/mysql.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>mysql
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp-relay-server.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>NTP Relay Server
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/python.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Python
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/proxy.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>proxy
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/pt-deadlock-logger.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>pt-deadlock-logger
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/swap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>swap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/timedatectl.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>timedatectl
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos7.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS7.*
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/xtrabackup.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>xtrabackup
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/nodejs.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nodejs
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/semver.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>semver
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/opensource.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>OpenSource
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/voidy-bootstrap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>voidy-bootstrap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>ntp
+    </a>
+</span>
+</p>
+
+
+
+<hr />
+
+        </div><!--/sidebar -->
+      </div><!--/row-->
+    </div><!--/.container /#main-container -->
+
+    <footer id="site-footer">
+ 
+      <address id="site-colophon">
+        ©2016 Code-Doc. All Rights Reserved
+        <p class="text-center text-muted">
+        Site built using <a href="http://getpelican.com/" target="_blank">Pelican</a>
+        &nbsp;&bull;&nbsp;   Theme based on VoidyBootstrap.
+        </p>
+      </address><!-- /colophon  -->
+    </footer>
+
+
+    <!-- javascript -->
+
+
+<!-- Facebook -->
+<!-- <div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script> -->
+
+<!-- Twitter -->
+<!-- <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> -->
+
+<!-- Google+ -->
+<!-- Synchronous 
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+-->
+<!-- Asynchronous -->
+<!-- <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/platform.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> -->  </body>
+</html>

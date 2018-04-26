@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="code-doc" />
+    <meta name="generator" content="Pelican (Code-doc theme)" />
+
+    <title>Axure RP 8.0 for Mac 生成的HTML站点添加关闭所有节点的功能 - code-doc</title>
+
+   
+        <link href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+      <!--   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" /> -->
+     <!--  <link href="//libs.baidu.com/fontawesome/4.0.3/css/font-awesome.min.css" rel="stylesheet"> -->
+      <link href="//cdn.bootcss.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet">
+      <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />   -->
+
+
+      <link rel="stylesheet" href="/theme/css/pygment.css" />
+      <link rel="stylesheet" href="/theme/css/code_doc_bootstrap.css" />
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link rel="shortcut icon" href="/favicon.ico" />
+  </head>
+
+  <body>
+   
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+	   <div class="navbar-header">
+		<button type="button" class="navbar-toggle" 
+				data-toggle="collapse" data-target="#main-navbar-collapse">
+		  <span class="sr-only">Toggle navigation</span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		  <span class="icon-bar"></span>
+		</button>
+
+		<a class="navbar-brand" href="/" rel="home">
+          <i class="fa fa-home fa-fw fa-lg"> </i>  code-doc </a>
+       </div>
+
+      <div class="collapse navbar-collapse" id="main-navbar-collapse">
+        <ul class="nav navbar-nav">
+            <li class="divider"></li>
+            <li class="">
+              <a href="/archives.html">Archives</a>
+            </li>
+          <li class="divider"></li>
+        </ul> <!-- /nav -->
+      </div> <!-- /navbar-collapse -->
+	  </div> <!-- /container -->
+    </nav> <!-- /navbar -->
+
+
+
+    <div class="container" id="main-container">
+      <div class="row">
+        <div class="col-md-9" id="content">
+<article itemscope="itemscope" itemtype="http://schema.org/BlogPosting">
+  <header class="article-header">
+
+<h1>
+  <a href="/posts/2016/Aug/16/axure-rp-80-for-mac-sheng-cheng-de-htmlzhan-dian-tian-jia-guan-bi-suo-you-jie-dian-de-gong-neng/" rel="bookmark"
+     title="Permalink to Axure RP 8.0 for Mac 生成的HTML站点添加关闭所有节点的功能">
+    Axure RP 8.0 for Mac 生成的HTML站点添加关闭所有节点的功能
+  </a>
+</h1><div class="article-header-info">
+
+  <p>
+      作者： <a href="/author/frankhe.html">Frank.he</a>
+    分类：
+    <a href="/category/axure.html">
+      Axure</a>
+    &nbsp;&nbsp;
+
+    时间：2016-08-16 18:30 
+
+
+  </p>
+</div> <!-- /.article-header-info -->  </header>
+  <div class="content-body" itemprop="text articleBody">
+	<blockquote>
+<p>制作的RP图节点很多的时候，遇到了全部收起节点，这样很容易找到自己想找到的内容。
+</p>
+</blockquote>
+<h3>找到start.html文件</h3>
+<p>在Mac Applications 目录中右击 Axure RP 8 单击显示包内容，找到 /Applications/Axure RP 8.app/Contents/Resources/DefaultSettings/Prototype_Files/start.html</p>
+<p>或者在finder 中 shift+cmd+g  /Applications/Axure RP 8.app/Contents/Resources/DefaultSettings/Prototype_Files/ </p>
+<h3>编辑start.html</h3>
+<p>在文件末尾添加如下代码:</p>
+<div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;</span>
+<span class="c1">//关闭所有节点</span>
+<span class="kd">function</span> <span class="nx">closeAll</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">openNode</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#sitemapTreeContainer ul:eq(0)&#39;</span><span class="p">).</span><span class="nx">children</span><span class="p">(</span><span class="s1">&#39;.sitemapExpandableNode&#39;</span><span class="p">);</span>
+    <span class="nx">closeNode</span><span class="p">(</span><span class="nx">openNode</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">//关闭节点</span>
+<span class="kd">function</span> <span class="nx">closeNode</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nx">node</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="nx">e</span><span class="p">){</span>
+    <span class="c1">//查找子节点</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nx">e</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;ul:eq(0)&#39;</span><span class="p">).</span><span class="nx">children</span><span class="p">(</span><span class="s1">&#39;.sitemapExpandableNode&#39;</span><span class="p">).</span><span class="nx">length</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//递归 </span>
+            <span class="nx">closeNode</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nx">e</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;ul:eq(0)&#39;</span><span class="p">).</span><span class="nx">children</span><span class="p">(</span><span class="s1">&#39;.sitemapExpandableNode&#39;</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="c1">//调用单击事件</span>
+    <span class="nx">$</span><span class="p">(</span><span class="nx">e</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;.sitemapMinus:eq(0)&#39;</span><span class="p">).</span><span class="nx">click</span><span class="p">();</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="nx">$</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="c1">//工具栏添加“关闭节点”按钮</span>
+    <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#sitemapToolbar div:eq(0)&#39;</span><span class="p">).</span><span class="nx">append</span><span class="p">(</span><span class="s1">&#39;&lt;a id=&quot;closeNode&quot; onclick=&quot;closeAll();&quot; title=&quot;关闭节点&quot;&gt;关闭节点&lt;/a&gt;&#39;</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt; </span>
+</pre></div>
+
+
+<p>重新生成站点HTML 就可以看到 关闭节点</p>
+
+  </div>
+  
+<div class="article-tag-list">
+<span class="label label-default">Tags</span>
+	<a href="/tag/axure.html"><i class="fa fa-tag"></i>Axure</a>&nbsp;
+</div> <!--  <hr />
+  <div class="well well-sm">  
+  --> <!-- Social media sharing buttons -->
+ <!--     -->
+
+    <!-- Google+ -->
+ <!--    <div class="g-plus" data-action="share" data-annotation="bubble"></div>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <div class="g-plusone" data-size="medium"></div>&nbsp; -->
+
+    <!-- Facebook -->
+<!--     <div class="fb-like" 
+        data-href="/posts/2016/Aug/16/axure-rp-80-for-mac-sheng-cheng-de-htmlzhan-dian-tian-jia-guan-bi-suo-you-jie-dian-de-gong-neng/" 
+        data-layout="button_count" 
+        data-action="like" data-show-faces="true" 
+        data-share="true">
+    </div>
+    &nbsp;
+  </div>  -->
+
+  <!-- /Social media sharing buttons -->
+
+ 
+
+ <div class="pagination">
+      <ul>
+        <li class="prev"><a href="/posts/2016/Aug/16/writer_pelican/">← 上一篇</a></li>
+        <li><a href="/archives.html">Archive</a></li>
+        <li class="next"><a href="/posts/2016/Aug/25/mysql5.7.14/">下一篇 →</a></li>
+      </ul>
+    </div>
+
+  
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+        <div class="ds-thread" data-thread-key="axure-rp-80-for-mac-sheng-cheng-de-htmlzhan-dian-tian-jia-guan-bi-suo-you-jie-dian-de-gong-neng" data-title="Axure RP 8.0 for Mac 生成的HTML站点添加关闭所有节点的功能" data-url="/posts/2016/Aug/16/axure-rp-80-for-mac-sheng-cheng-de-htmlzhan-dian-tian-jia-guan-bi-suo-you-jie-dian-de-gong-neng/"></div>
+        <script type="text/javascript">
+            var duoshuoQuery = {short_name:"code-doc"};
+            (function() {
+                var ds = document.createElement('script');
+                ds.type = 'text/javascript';ds.async = true;
+                ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+                ds.charset = 'UTF-8';
+                (document.getElementsByTagName('head')[0]
+                 || document.getElementsByTagName('body')[0]).appendChild(ds);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://duoshuo.com/">comments powered by Duoshuo.</a></noscript>
+       
+
+    </section>
+
+
+
+
+</article>
+        </div><!-- /content -->
+
+        <div class="col-md-3 sidebar-nav" id="sidebar">
+
+<div class="row">
+
+
+<div class="col-xs-6 col-md-12">
+<h4><i class="fa fa-folder fa-fw fa-lg"></i> Categories</h4>
+<ul class="list-unstyled category-links">
+  <li><a href="/category/axure.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Axure</a></li>
+  <li><a href="/category/docker.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Docker</a></li>
+  <li><a href="/category/linux.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> linux</a></li>
+  <li><a href="/category/logrotate.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Logrotate</a></li>
+  <li><a href="/category/mysql.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> MySQL</a></li>
+  <li><a href="/category/nginx.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> nginx</a></li>
+  <li><a href="/category/nodejs.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Node.js</a></li>
+  <li><a href="/category/opensource.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> OpenSource</a></li>
+  <li><a href="/category/pelican.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> pelican</a></li>
+  <li><a href="/category/python.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> Python</a></li>
+  <li><a href="/category/semver.html" >
+    <i class="fa fa-folder-open fa-fw fa-lg"></i> semver</a></li>
+</ul>
+</div>
+
+</div> <!-- /row -->
+
+
+
+<h4><i class="fa fa-comment fa-fw fa-lg"></i>Recent Post</h4>
+<ul id="recent-posts">
+    <li>
+      <a href="/posts/2018/Apr/13/dockerda-jian-lnmphuan-jing/">Docker搭建LNMP环境</a>
+    </li>
+    <li>
+      <a href="/posts/2018/Apr/13/a-li-yun-fu-wu-qi-an-zhuang-an-quan-pei-zhi/">阿里云服务器安装安全配置</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Dec/04/centos7xpei-zhi-nginxde-servicejiao-ben-shi-xian-zi-dong-qi-dong/">CentOS7.x配置nginx的service脚本实现自动启动</a>
+    </li>
+    <li>
+      <a href="/posts/2017/Nov/21/linux_MySQL/">CentOS 7.X中的MySQL5.6升级到 5.7</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Nov/29/CentOS7_timedatectl/">CentOS7 修改时区</a>
+    </li>
+    <li>
+      <a href="/posts/2016/Oct/13/nodejs_nginx/">阿里云服务器配置nodejs环境</a>
+    </li>
+</ul>
+
+<h4><i class="fa fa-tags fa-fw fa-lg"></i> Tags</h4>
+<p class="tag-cloud">
+<span class="tag-4">
+    <a href="/tag/logrotate.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>logrotate
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona-toolkit.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona-toolkit
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/iso.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>iso
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php-fpm.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php-fpm
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/find.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>find
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/linux.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>linux
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/rkhunter.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>rkhunter
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/php.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>php
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/jemalloc.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>jemalloc
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/tengine.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Tengine
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/dnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>dnmp
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/axure.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Axure
+    </a>
+</span>
+<span class="tag-2">
+    <a href="/tag/yum.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>yum
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/lnmp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>lnmp
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/nginx.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nginx
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/pelican.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Pelican
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/shell.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>shell
+    </a>
+</span>
+<span class="tag-1">
+    <a href="/tag/mysql.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>mysql
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp-relay-server.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>NTP Relay Server
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/python.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>Python
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/proxy.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>proxy
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/pt-deadlock-logger.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>pt-deadlock-logger
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/swap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>swap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/timedatectl.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>timedatectl
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos7.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS7.*
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/percona.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>percona
+    </a>
+</span>
+<span class="tag-3">
+    <a href="/tag/xtrabackup.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>xtrabackup
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/nodejs.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>nodejs
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/centos.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>CentOS
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/semver.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>semver
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/opensource.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>OpenSource
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/voidy-bootstrap.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>voidy-bootstrap
+    </a>
+</span>
+<span class="tag-4">
+    <a href="/tag/ntp.html">
+        <i class="fa fa-tag fa-fw fa-lg"></i>ntp
+    </a>
+</span>
+</p>
+
+
+
+<hr />
+
+        </div><!--/sidebar -->
+      </div><!--/row-->
+    </div><!--/.container /#main-container -->
+
+    <footer id="site-footer">
+ 
+      <address id="site-colophon">
+        ©2016 Code-Doc. All Rights Reserved
+        <p class="text-center text-muted">
+        Site built using <a href="http://getpelican.com/" target="_blank">Pelican</a>
+        &nbsp;&bull;&nbsp;   Theme based on VoidyBootstrap.
+        </p>
+      </address><!-- /colophon  -->
+    </footer>
+
+
+    <!-- javascript -->
+
+
+<!-- Facebook -->
+<!-- <div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script> -->
+
+<!-- Twitter -->
+<!-- <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> -->
+
+<!-- Google+ -->
+<!-- Synchronous 
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+-->
+<!-- Asynchronous -->
+<!-- <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/platform.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> -->  </body>
+</html>
